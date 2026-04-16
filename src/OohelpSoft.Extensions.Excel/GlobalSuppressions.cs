@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Style", "IDE0290:Use primary constructor")]
+[assembly: SuppressMessage("Naming", "CA1720:Identifier contains type name")]

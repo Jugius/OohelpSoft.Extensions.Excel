@@ -8,13 +8,15 @@ public class ExcelSheet
 
     public ExcelBook Parent => parent;
     public string Name { get; set; } = "Лист1";
-    public bool Hidden { get; set; } = false;
-    public bool ShowGridLines { get; set; } = false;
+    public bool Hidden { get; set; }
+    public bool ShowGridLines { get; set; }
     public bool CheckHyperlinksDrawing { get; set; } = true;
     public ExcelTable? Table { get; set; }
 
     public virtual ExcelWorksheet DrawSheet(ExcelPackage excel, IProgress<ProgressState>? progress = null)
     {
+        ArgumentNullException.ThrowIfNull(excel);
+
         ExcelWorksheet worksheet = excel.Workbook.Worksheets.Add(this.Name);
         worksheet.View.ShowGridLines = this.ShowGridLines;
 
@@ -28,9 +30,9 @@ public class ExcelSheet
     {
         this.parent = parent;
     }
-    public ExcelTable<T> CreateTable<T>(List<T> items, string tableName) where T : class
+    public ExcelTable<T> CreateTable<T>(IList<T> items, string tableName) where T : class
     {
-        ExcelTable<T> table = new ExcelTable<T>(items, this)
+        ExcelTable<T> table = new (items, this)
         {
             Name = tableName
         };

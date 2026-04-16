@@ -22,6 +22,8 @@ public abstract class ExcelField<TSource> : ExcelField where TSource : class
             throw new ArgumentException($"Invalid source type. Expected {typeof(TSource)}, but got {typeof(T)}");
     }
     protected static int? NullableOrNull(int? val) => val.HasValue && val.Value != 0 ? val.Value : null;
+#pragma warning disable S1244 // Floating point numbers should not be tested for equality
     protected static double? NullableOrNull(double? val) => val.HasValue && val.Value != 0 ? val.Value : null;
-    protected static float? NullableOrNull(float? val) => val.HasValue && val.Value != 0 ? val.Value : null;    
+    protected static float? NullableOrNull(float? val) => val.HasValue && val.Value != 0 ? val.Value : null;
+#pragma warning restore S1244 // Floating point numbers should not be tested for equality
 }

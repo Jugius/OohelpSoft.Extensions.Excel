@@ -4,7 +4,7 @@ public class ExcelBook
 {
     private readonly List<ExcelSheet> sheets;
 
-    public List<ExcelSheet> Sheets => sheets;
+    public IList<ExcelSheet> Sheets => sheets;
     public ExcelBook()
     {
         this.sheets = [];
@@ -15,7 +15,7 @@ public class ExcelBook
     }
     public ExcelSheet CreateSheet(string sheetName)
     {
-        ExcelSheet sheet = new ExcelSheet(this)
+        ExcelSheet sheet = new (this)
         {
             Name = sheetName
         };

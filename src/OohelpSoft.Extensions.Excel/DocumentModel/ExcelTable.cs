@@ -10,19 +10,23 @@ public abstract class ExcelTable
     public ExcelTableStyle Style { get; } = new ExcelTableStyle();
     public string Name {  get; set; } = null!;
     public ExcelCell TopLeftCell { get; set; } = new ExcelCell();
-    public List<ExcelField> Fields { get; } = [];
+    public IList<ExcelField> Fields { get; } = [];
     public abstract int RowsCout { get; }
     protected ExcelTable(ExcelSheet parent) => this.parentSheet = parent;
     public abstract void DrawTable(ExcelWorksheet worksheet, IProgress<ProgressState>? progress = null);    
 }
-public class ExcelTable<TExcelItem>(List<TExcelItem> items, ExcelSheet parent) : ExcelTable(parent) where TExcelItem : class
+public class ExcelTable<TExcelItem>(IList<TExcelItem> items, ExcelSheet parent) : ExcelTable(parent) where TExcelItem : class
 {
-    public List<TExcelItem> Items { get; } = items;
+    public IList<TExcelItem> Items { get; } = items;
     public override int RowsCout => this.Items.Count;
 
     public override void DrawTable(ExcelWorksheet worksheet, IProgress<ProgressState>? progress = null)
     {
-        InsertTable(worksheet);
+        ArgumentNullException.ThrowIfNull(worksheet);
+
+        using var table = worksheet.AddTable(this);
+        table.ApplyTableStyles(this.Style);
+
         int row = this.TopLeftCell.Row + 1;
         int total = this.Items.Count;
         int completed = 0;
@@ -38,10 +42,5 @@ public class ExcelTable<TExcelItem>(List<TExcelItem> items, ExcelSheet parent) :
             row++;
             progress?.Report(new ProgressState(total, ++completed));
         }
-    }
-    protected void InsertTable(ExcelWorksheet worksheet)
-    {
-        using var table = worksheet.AddTable(this);
-        table.ApplyTableStyles(this.Style);
     }
 }

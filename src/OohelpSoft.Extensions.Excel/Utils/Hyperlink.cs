@@ -6,6 +6,8 @@ public static class Hyperlink
     private const int MaxExcelUriLength = 255;        
     public static void DrawHyperlink(this ExcelRange cell, Uri uri, string cellText, bool asFormula = false)
     {
+        ArgumentNullException.ThrowIfNull(cell);
+
         if (uri == null || !uri.IsAbsoluteUri) return;
 
         if (asFormula)
@@ -22,6 +24,8 @@ public static class Hyperlink
     }
     public static void DrawFormula(ExcelRange cell, Uri uri, string cellText)
     {
+        ArgumentNullException.ThrowIfNull(cell);
+
         if (uri == null) return;
         if (TryGetNormalizedExcelUri(uri, out string normalized))
         {
@@ -53,7 +57,7 @@ public static class Hyperlink
         if (cell.Formula != null)
         {
             string formula = cell.Formula;
-            if (formula.Contains("HYPERLINK"))
+            if (formula.Contains("HYPERLINK", StringComparison.OrdinalIgnoreCase))
             {
                 int Start, End;
                 Start = formula.IndexOf('"', 0) + 1;
@@ -74,10 +78,10 @@ public static class Hyperlink
 
         var original = uri.OriginalString;
                 
-        if (original.Contains('"') || original.Contains('\''))
+        if (original.Contains('"', StringComparison.OrdinalIgnoreCase) || original.Contains('\'', StringComparison.OrdinalIgnoreCase))
             return false;
         
-        var candidate = original.Replace(" ", "%20");
+        var candidate = original.Replace(" ", "%20", StringComparison.OrdinalIgnoreCase);
                 
         if (candidate.Length > MaxExcelUriLength)
             return false;

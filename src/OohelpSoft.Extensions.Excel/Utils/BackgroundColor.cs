@@ -7,6 +7,8 @@ public static class BackgroundColor
 {
     public static void SetBackgroundColor(this ExcelRangeBase range, Color color)
     {
+        ArgumentNullException.ThrowIfNull(range);
+
         if (color == Color.Empty)
         {
             range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.None;
@@ -19,6 +21,8 @@ public static class BackgroundColor
     }
     public static Color GetBackgroundColor(this ExcelRangeBase cell)
     {
+        ArgumentNullException.ThrowIfNull(cell);
+
         var fill = cell.Style.Fill;
 
         if (fill.PatternType == OfficeOpenXml.Style.ExcelFillStyle.None)
@@ -42,23 +46,34 @@ public static class BackgroundColor
     }
     private static Color ConvertColor(string hexColor)
     {
-        string colorcode = hexColor.TrimStart('#');
-
-        if (colorcode == string.Empty)
+        if (string.IsNullOrWhiteSpace(hexColor))
             return Color.Empty;
 
-        if (colorcode.Length == 6)
-            return Color.FromArgb(255, // hardcoded opaque
-                        int.Parse(colorcode[..2], NumberStyles.HexNumber),
-                        int.Parse(colorcode.Substring(2, 2), NumberStyles.HexNumber),
-                        int.Parse(colorcode.Substring(4, 2), NumberStyles.HexNumber));
-        else if (colorcode.Length == 8) // assuming length of 8
-            return Color.FromArgb(
-                        int.Parse(colorcode[..2], NumberStyles.HexNumber),
-                        int.Parse(colorcode.Substring(2, 2), NumberStyles.HexNumber),
-                        int.Parse(colorcode.Substring(4, 2), NumberStyles.HexNumber),
-                        int.Parse(colorcode.Substring(6, 2), NumberStyles.HexNumber));
-        else
-            throw new Exception($"'{colorcode}' is not valid Color");
+        ReadOnlySpan<char> span = hexColor.AsSpan().TrimStart('#');
+
+        if (span.IsEmpty)
+            return Color.Empty;
+
+        if (span.Length != 6 && span.Length != 8)
+            throw new ArgumentException($"'{hexColor}' is not a valid color");
+
+        byte a = 255;
+        int offset = 0;
+
+        if (span.Length == 8)
+        {
+            a = ParseByte(span, 0);
+            offset = 2;
+        }
+
+        byte r = ParseByte(span, offset);
+        byte g = ParseByte(span, offset + 2);
+        byte b = ParseByte(span, offset + 4);
+
+        return Color.FromArgb(a, r, g, b);
+    }
+    private static byte ParseByte(ReadOnlySpan<char> span, int start)
+    {
+        return byte.Parse(span.Slice(start, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
     }
 }

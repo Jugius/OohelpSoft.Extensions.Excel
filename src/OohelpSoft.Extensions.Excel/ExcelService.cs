@@ -27,7 +27,7 @@ public static class ExcelService
             .ToList();
         return list;
     }
-    public static List<T>Import<T>(FileInfo file, IEnumerable<IPropertySetter<T>> fields) where T : class, new()
+    public static IList<T>Import<T>(FileInfo file, IEnumerable<IPropertySetter<T>> fields) where T : class, new()
     {
         using var excel = new ExcelPackage(file);
         using var workSheet = excel.Workbook.Worksheets[0];
@@ -35,7 +35,7 @@ public static class ExcelService
         var collection = workSheet.ConvertSheetToObjects(fields).ToList();
         return collection;
     }
-    public static List<T> Import<T>(byte[] fileBytes, IEnumerable<IPropertySetter<T>> fields) where T : class, new()
+    public static IList<T> Import<T>(byte[] fileBytes, IEnumerable<IPropertySetter<T>> fields) where T : class, new()
     {
         using MemoryStream memoryStream = new MemoryStream(fileBytes, false);
         using ExcelPackage excel = new ExcelPackage(memoryStream);
@@ -46,6 +46,8 @@ public static class ExcelService
     }
     public static async Task<byte[]> Export(ExcelBook book, IProgress<ProgressState>? progress = null)
     {
+        ArgumentNullException.ThrowIfNull(book);
+
         IProgress<ProgressState>? sheetProgressCounter = null;
         int total = 0;
         int completed = 0;
@@ -77,11 +79,50 @@ public static class ExcelService
 
         }).ConfigureAwait(false);
 
-        return await package.GetAsByteArrayAsync();
+        return await package.GetAsByteArrayAsync().ConfigureAwait(false);
     }
+    public static async Task Export(ExcelBook book, Stream stream, IProgress<ProgressState>? progress = null)
+    {
+        ArgumentNullException.ThrowIfNull(book);
+        ArgumentNullException.ThrowIfNull(stream);
 
+        IProgress<ProgressState>? sheetProgressCounter = null;
+        int total = 0;
+        int completed = 0;
+
+        if (progress != null)
+        {
+            total = CalculateTotalRecords(book);
+            sheetProgressCounter = new Progress<ProgressState>((e) =>
+            {
+                progress.Report(new ProgressState(total, ++completed));
+            });
+        }
+
+        using ExcelPackage package = await Task.Run(() =>
+        {
+
+            ExcelPackage package = new ExcelPackage();
+            foreach (var sheet in book.Sheets)
+            {
+                sheet.DrawSheet(package, sheetProgressCounter);
+            }
+
+            foreach (var sheet in book.Sheets.Where(a => a.Hidden))
+            {
+                package.Workbook.Worksheets[sheet.Name].Hidden = eWorkSheetHidden.Hidden;
+            }
+
+            return package;
+
+        }).ConfigureAwait(false);
+
+        await package.SaveAsAsync(stream).ConfigureAwait(false);
+    }
     public static ExcelPackage CreatePackage(ExcelBook book, IProgress<ProgressState>? progress = null)
     {
+        ArgumentNullException.ThrowIfNull(book);
+
         IProgress<ProgressState>? sheetProgressCounter = null;
         int total = 0;
         int completed = 0;
@@ -115,41 +156,7 @@ public static class ExcelService
 
         return package;
     }
-    public static async Task Export(ExcelBook book, Stream stream, IProgress<ProgressState>? progress = null)
-    {
-        IProgress<ProgressState>? sheetProgressCounter = null;
-        int total = 0;
-        int completed = 0;
-
-        if (progress != null)
-        { 
-            total = CalculateTotalRecords(book);
-            sheetProgressCounter = new Progress<ProgressState>((e) =>
-            {
-                progress.Report(new ProgressState(total, ++completed));
-            });
-        }
-
-        using ExcelPackage package = await Task.Run(() =>
-        {
-
-            ExcelPackage package = new ExcelPackage();
-            foreach (var sheet in book.Sheets)
-            {
-                sheet.DrawSheet(package, sheetProgressCounter);
-            }
-
-            foreach (var sheet in book.Sheets.Where(a => a.Hidden))
-            {
-                package.Workbook.Worksheets[sheet.Name].Hidden = eWorkSheetHidden.Hidden;
-            }
-
-            return package;
-
-        }).ConfigureAwait(false);
-
-        await package.SaveAsAsync(stream);
-    }    
+    
     private static int CalculateTotalRecords(ExcelBook book)
     {
         int total = 0;
