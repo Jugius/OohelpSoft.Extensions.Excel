@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>OohelpSoft.Extensions.Excel</AssemblyName>
+    <RootNamespace>OohelpSoft.Excel</RootNamespace>
+    <Version>1.0.0</Version>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+
+      <Authors>Andrey Slusarev</Authors>
+      <Company>OoHelp.Net</Company>
+      <PackageId>$(AssemblyName)</PackageId>
+      <Copyright>©2026 Andrey Slusarev (OoHelp.Net). All rights reserved.</Copyright>
+      <Description>A NuGet library wrapper around EPPlus that simplifies and speeds up common operations with Excel.</Description>
+
+  </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="EPPlus" Version="8.5.1" />
+        <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.6" />
+    </ItemGroup>
+
+</Project>
