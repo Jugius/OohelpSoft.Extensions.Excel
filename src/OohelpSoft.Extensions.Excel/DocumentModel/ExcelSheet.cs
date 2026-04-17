@@ -4,9 +4,7 @@ namespace OohelpSoft.Excel.DocumentModel;
 
 public class ExcelSheet
 {
-    private readonly ExcelBook parent;
-
-    public ExcelBook Parent => parent;
+    public ExcelBook Parent { get; }
     public string Name { get; set; } = "Лист1";
     public bool Hidden { get; set; }
     public bool ShowGridLines { get; set; }
@@ -26,10 +24,7 @@ public class ExcelSheet
         this.Table?.DrawTable(worksheet, progress);
         return worksheet;
     }
-    public ExcelSheet(ExcelBook parent)
-    {
-        this.parent = parent;
-    }
+    public ExcelSheet(ExcelBook parent) => this.Parent = parent;
     public ExcelTable<T> CreateTable<T>(IList<T> items, string tableName) where T : class
     {
         ExcelTable<T> table = new (items, this)

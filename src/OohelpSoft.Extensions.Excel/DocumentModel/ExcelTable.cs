@@ -10,7 +10,7 @@ public abstract class ExcelTable
     public ExcelTableStyle Style { get; } = new ExcelTableStyle();
     public string Name {  get; set; } = null!;
     public ExcelCell TopLeftCell { get; set; } = new ExcelCell();
-    public IList<ExcelField> Fields { get; } = [];
+    public ExcelFields Fields { get; } = new();
     public abstract int RowsCout { get; }
     protected ExcelTable(ExcelSheet parent) => this.parentSheet = parent;
     public abstract void DrawTable(ExcelWorksheet worksheet, IProgress<ProgressState>? progress = null);    
