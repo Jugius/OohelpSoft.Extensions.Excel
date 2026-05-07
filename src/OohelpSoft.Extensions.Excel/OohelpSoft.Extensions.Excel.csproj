@@ -28,10 +28,10 @@
   </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="EPPlus" Version="8.5.3" />
+        <PackageReference Include="EPPlus" Version="8.5.4" />
     </ItemGroup>
     <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'">
-        <PackageReference Include="SonarAnalyzer.CSharp" Version="10.23.0.137933">
+        <PackageReference Include="SonarAnalyzer.CSharp" Version="10.25.0.139117">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
