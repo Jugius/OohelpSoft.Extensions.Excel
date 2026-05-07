@@ -5,7 +5,7 @@ using OohelpSoft.Excel.Interfaces;
 
 namespace OohelpSoft.Excel;
 public static class ExcelService
-{
+{    
     public static IEnumerable<(TValue1, TValue2)> GetValues<TValue1, TValue2>(string filePath, int skipRows = 1)
     {
         using ExcelPackage excelPackage = new ExcelPackage(new FileInfo(filePath));
@@ -22,21 +22,36 @@ public static class ExcelService
             .ToList();
         return list;
     }
-    public static IList<T>Import<T>(FileInfo file, IEnumerable<IPropertySetter<T>> fields) where T : class, new()
+    
+    public static IList<T>Import<T>(IEnumerable<IPropertySetter<T>> fields, FileInfo file, string sheetName, int startRow = 2) where T : class, new()
     {
         using var excel = new ExcelPackage(file);
-        using var workSheet = excel.Workbook.Worksheets[0];
-
+        using var workSheet = excel.Workbook.Worksheets[sheetName] ?? throw new ArgumentException($"Sheet with name '{sheetName}' not found in the Excel file.");
         var collection = workSheet.ConvertSheetToObjects(fields).ToList();
         return collection;
     }
-    public static IList<T> Import<T>(byte[] fileBytes, IEnumerable<IPropertySetter<T>> fields) where T : class, new()
-    {
-        using MemoryStream memoryStream = new MemoryStream(fileBytes, false);
-        using ExcelPackage excel = new ExcelPackage(memoryStream);
-        using var workSheet = excel.Workbook.Worksheets[0];
 
+    public static IList<T> Import<T>(IEnumerable<IPropertySetter<T>> fields, FileInfo file, int page = 1, int startRow = 2) where T : class, new()
+    {
+        using var excel = new ExcelPackage(file);
+        using var workSheet = excel.Workbook.Worksheets[page - 1];
         var collection = workSheet.ConvertSheetToObjects(fields).ToList();
+        return collection;
+    }
+
+    public static IList<T> Import<T>(IEnumerable<IPropertySetter<T>> fields, Stream stream, string sheetName, int startRow = 2) where T : class, new()
+    {
+        using ExcelPackage excel = new ExcelPackage(stream);
+        using var workSheet = excel.Workbook.Worksheets[sheetName] ?? throw new ArgumentException($"Sheet with name '{sheetName}' not found in the Excel file.");
+        var collection = workSheet.ConvertSheetToObjects(fields, startRow).ToList();
+        return collection;
+    }
+
+    public static IList<T> Import<T>(IEnumerable<IPropertySetter<T>> fields, Stream stream, int page = 1, int startRow = 2) where T : class, new()
+    {
+        using ExcelPackage excel = new ExcelPackage(stream);
+        using var workSheet = excel.Workbook.Worksheets[page - 1];
+        var collection = workSheet.ConvertSheetToObjects(fields, startRow).ToList();
         return collection;
     }
     public static async Task<byte[]> Export(ExcelBook book, IProgress<ProgressState>? progress = null)

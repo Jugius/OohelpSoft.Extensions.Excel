@@ -5,7 +5,7 @@ using OohelpSoft.Excel.Interfaces;
 namespace OohelpSoft.Excel.Extensions;
 internal static class ExcelWorksheetExtensions
 {    
-    public static IEnumerable<T> ConvertSheetToObjects<T>(this ExcelWorksheet worksheet, IEnumerable<IPropertySetter<T>> columns) where T : class, new()
+    public static IEnumerable<T> ConvertSheetToObjects<T>(this ExcelWorksheet worksheet, IEnumerable<IPropertySetter<T>> columns, int startRow = 2) where T : class, new()
     {
         var rows = worksheet.Cells
             .Select(cell => cell.Start.Row)
@@ -13,7 +13,7 @@ internal static class ExcelWorksheetExtensions
             .OrderBy(x => x);
 
         
-        var collection = rows.Skip(1).Select(row =>
+        var collection = rows.Skip(startRow - 1).Select(row =>
         {
             T tnew = new T();
             int columnPos = 1;
