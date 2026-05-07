@@ -6,11 +6,6 @@ using OohelpSoft.Excel.Interfaces;
 namespace OohelpSoft.Excel;
 public static class ExcelService
 {
-    private const string OoHelp = "OoHelp.Net";
-    static ExcelService() 
-    {
-        ExcelPackage.License.SetNonCommercialOrganization(OoHelp);
-    }    
     public static IEnumerable<(TValue1, TValue2)> GetValues<TValue1, TValue2>(string filePath, int skipRows = 1)
     {
         using ExcelPackage excelPackage = new ExcelPackage(new FileInfo(filePath));
