@@ -7,7 +7,7 @@ public abstract class ExcelField
 {
     public virtual string? NumberFormat { get; set; }
     public virtual string ColumnHeader { get; set; } = null!;
-    public virtual int ColumnWidth { get; set; }
+    public virtual int ColumnWidth { get; set; } = 9;
     public ExcelHorizontalAlignment HorizontalAlignment { get; set; } = ExcelHorizontalAlignment.Left;
     public abstract void DrawCell<T>(T source, ExcelRange cell);
 }
