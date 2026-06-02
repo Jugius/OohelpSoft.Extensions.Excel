@@ -172,7 +172,10 @@ public static class ExcelService
         int total = 0;
         foreach (var sheet in book.Sheets)
         {
-            total += sheet.Table!.RowsCout;
+            foreach (var table in sheet.Tables)
+            {
+                total += table.RowsCout;
+            }            
         }
         return total;
     }

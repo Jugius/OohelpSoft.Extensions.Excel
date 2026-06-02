@@ -9,7 +9,7 @@ public class ExcelSheet
     public bool Hidden { get; set; }
     public bool ShowGridLines { get; set; }
     public bool CheckHyperlinksDrawing { get; set; } = true;
-    public ExcelTable? Table { get; set; }
+    public ExcelTables Tables { get; }   
 
     public virtual ExcelWorksheet DrawSheet(ExcelPackage excel, IProgress<ProgressState>? progress = null)
     {
@@ -21,24 +21,22 @@ public class ExcelSheet
         if(this.CheckHyperlinksDrawing)
             this.CheckHyperlinks();
 
-        this.Table?.DrawTable(worksheet, progress);
+        foreach (var table in this.Tables)
+        {
+            table.DrawTable(worksheet, progress);
+        }
+        
         return worksheet;
     }
-    public ExcelSheet(ExcelBook parent) => this.Parent = parent;
-    public ExcelTable<T> CreateTable<T>(IList<T> items, string tableName) where T : class
+    public ExcelSheet(ExcelBook parent)
     {
-        ExcelTable<T> table = new (items, this)
-        {
-            Name = tableName
-        };
-
-        this.Table = table;
-        return table;
+        this.Parent = parent;
+        this.Tables = new(this);
     }
     private void CheckHyperlinks()
     {
-        var hyperlinkFields = this.Table!.Fields.OfType<Interfaces.IExcelHyperlink>().ToList();
-        int potentialLinksCount = hyperlinkFields.Count * this.Table.RowsCout;
+        var hyperlinkFields = this.Tables.SelectMany(t => t.Fields.OfType<Interfaces.IExcelHyperlink>()).ToList();
+        int potentialLinksCount = hyperlinkFields.Count * this.Tables.Sum(t => t.RowsCout);
 
         if (potentialLinksCount <= Constants.Sheet.MaxHyperlinks) return;
 

@@ -12,7 +12,7 @@ public abstract class ExcelTable
     public ExcelFields Fields { get; } = new();
     public abstract int RowsCout { get; }
     protected ExcelTable(ExcelSheet parent) => this.parentSheet = parent;
-    public abstract void DrawTable(ExcelWorksheet worksheet, IProgress<ProgressState>? progress = null);    
+    public abstract void DrawTable(ExcelWorksheet worksheet, IProgress<ProgressState>? progress = null);
     protected virtual ExcelRange DrawTableStructure(ExcelWorksheet worksheet)
     {
         ArgumentNullException.ThrowIfNull(worksheet);
@@ -36,18 +36,32 @@ public abstract class ExcelTable
         }
 
         return worksheet.Cells[firstRow, firstCol, lastRow, lastCol];        
+    }
 }
-public class ExcelTable<TExcelItem>(IList<TExcelItem> items, ExcelSheet parent) : ExcelTable(parent) where TExcelItem : class
+public class ExcelTable<TExcelItem> : ExcelTable where TExcelItem : class
 {
-    public IList<TExcelItem> Items { get; } = items;
+    public ExcelTable(ExcelSheet parent, IList<TExcelItem> items) : base(parent)
+    {
+        this.Items = items;
+    }
+    public IList<TExcelItem> Items { get; }
     public override int RowsCout => this.Items.Count;
 
     public override void DrawTable(ExcelWorksheet worksheet, IProgress<ProgressState>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(worksheet);
 
-        using var table = worksheet.AddTable(this);
+        using var table = DrawTableStructure(worksheet);
         table.ApplyTableStyles(this.Style);
+
+        FillTableWithData(worksheet, progress);        
+    }
+
+    
+
+    protected virtual void FillTableWithData(ExcelWorksheet worksheet, IProgress<ProgressState>? progress = null)
+    {
+        ArgumentNullException.ThrowIfNull(worksheet);
 
         int row = this.TopLeftCell.Row + 1;
         int total = this.Items.Count;
@@ -65,4 +79,5 @@ public class ExcelTable<TExcelItem>(IList<TExcelItem> items, ExcelSheet parent) 
             progress?.Report(new ProgressState(total, ++completed));
         }
     }
+
 }
