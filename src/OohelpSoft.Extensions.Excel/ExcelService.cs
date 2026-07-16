@@ -54,81 +54,7 @@ public static class ExcelService
         var collection = workSheet.ConvertSheetToObjects(fields, startRow).ToList();
         return collection;
     }
-    public static async Task<byte[]> Export(ExcelBook book, IProgress<ProgressState>? progress = null)
-    {
-        ArgumentNullException.ThrowIfNull(book);
-
-        IProgress<ProgressState>? sheetProgressCounter = null;
-        int total = 0;
-        int completed = 0;
-
-        if (progress != null)
-        {
-            total = CalculateTotalRecords(book);
-            sheetProgressCounter = new Progress<ProgressState>((e) =>
-            {
-                progress.Report(new ProgressState(total, ++completed));
-            });
-        }
-
-        using ExcelPackage package = await Task.Run(() =>
-        {
-
-            ExcelPackage package = new ExcelPackage();
-            foreach (var sheet in book.Sheets)
-            {
-                sheet.DrawSheet(package, sheetProgressCounter);
-            }
-
-            foreach (var sheet in book.Sheets.Where(a => a.Hidden))
-            {
-                package.Workbook.Worksheets[sheet.Name].Hidden = eWorkSheetHidden.Hidden;
-            }
-
-            return package;
-
-        }).ConfigureAwait(false);
-
-        return await package.GetAsByteArrayAsync().ConfigureAwait(false);
-    }
-    public static async Task Export(ExcelBook book, Stream stream, IProgress<ProgressState>? progress = null)
-    {
-        ArgumentNullException.ThrowIfNull(book);
-        ArgumentNullException.ThrowIfNull(stream);
-
-        IProgress<ProgressState>? sheetProgressCounter = null;
-        int total = 0;
-        int completed = 0;
-
-        if (progress != null)
-        {
-            total = CalculateTotalRecords(book);
-            sheetProgressCounter = new Progress<ProgressState>((e) =>
-            {
-                progress.Report(new ProgressState(total, ++completed));
-            });
-        }
-
-        using ExcelPackage package = await Task.Run(() =>
-        {
-
-            ExcelPackage package = new ExcelPackage();
-            foreach (var sheet in book.Sheets)
-            {
-                sheet.DrawSheet(package, sheetProgressCounter);
-            }
-
-            foreach (var sheet in book.Sheets.Where(a => a.Hidden))
-            {
-                package.Workbook.Worksheets[sheet.Name].Hidden = eWorkSheetHidden.Hidden;
-            }
-
-            return package;
-
-        }).ConfigureAwait(false);
-
-        await package.SaveAsAsync(stream).ConfigureAwait(false);
-    }
+    public static Task<ExcelPackage> CreatePackageAsync(ExcelBook book, IProgress<ProgressState>? progress = null) => Task.Run(() => CreatePackage(book, progress));
     public static ExcelPackage CreatePackage(ExcelBook book, IProgress<ProgressState>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(book);
@@ -144,7 +70,8 @@ public static class ExcelService
                 total = CalculateTotalRecords(book);
                 sheetProgressCounter = new Progress<ProgressState>((e) =>
                 {
-                    progress.Report(new ProgressState(total, ++completed));
+                    int current = Interlocked.Increment(ref completed);
+                    progress.Report(new ProgressState(total, current));
                 });
             }
             else 
@@ -154,17 +81,26 @@ public static class ExcelService
         }
 
         ExcelPackage package = new ExcelPackage();
-        foreach (var sheet in book.Sheets)
-        {
-            sheet.DrawSheet(package, sheetProgressCounter);
-        }
 
-        foreach (var sheet in book.Sheets.Where(a => a.Hidden))
+        try
         {
-            package.Workbook.Worksheets[sheet.Name].Hidden = eWorkSheetHidden.Hidden;
-        }
+            foreach (var sheet in book.Sheets)
+            {
+                sheet.DrawSheet(package, sheetProgressCounter);
+            }
 
-        return package;
+            foreach (var sheet in book.Sheets.Where(a => a.Hidden))
+            {
+                package.Workbook.Worksheets[sheet.Name].Hidden = eWorkSheetHidden.Hidden;
+            }
+
+            return package;
+        }
+        catch
+        {
+            package.Dispose();
+            throw;
+        }
     }
     
     private static int CalculateTotalRecords(ExcelBook book)
